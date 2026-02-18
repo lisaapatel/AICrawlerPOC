@@ -1,0 +1,201 @@
+version: 0.1
+org:
+  company_name: "Upgrade"
+  company_name_variants:
+    - "Upgrade"
+    - "Upgrade, Inc."
+    - "Upgrade Inc"
+    - "Upgrade Loans"
+
+products:
+  product_keywords:
+    - "home improvement loan"
+    - "home improvement loans"
+    - "home improvement financing"
+    - "home renovation loan"
+    - "home renovation financing"
+    - "contractor financing"
+    - "home project financing"
+
+scan:
+  snippet_chars: 260
+  qualifier_window_chars: 400
+  proximity_window_chars: 250
+  case_insensitive: true
+  # Only report findings when the page is Upgrade-related (contains a company name variant).
+  require_upgrade_context: true
+  # If set (e.g. 400), "Upgrade" must appear within this many chars of the match (reduces false positives
+  # when Upgrade is only in footer and the match is about another lender, e.g. Citi).
+  upgrade_context_window_chars: 400
+
+# False-positive suppressions: findings that match any entry are not reported.
+# Add entries below or generate from marks: python mark_false_positives.py report.csv --marks false_positive_marks.csv --append-policy
+# Each entry: rule_id (required); optional url_contains, snippet_contains, match_contains (substring), reason (for docs).
+suppressions: []
+
+qualifiers:
+  subject_to_credit:
+    - "subject to credit approval"
+    - "subject to approval"
+    - "upon approval"
+    - "credit approval required"
+  terms_apply:
+    - "terms apply"
+    - "terms and conditions apply"
+  apr_varies:
+    - "apr varies"
+    - "rates vary"
+    - "rate varies"
+    - "based on creditworthiness"
+    - "based on your credit"
+    - "depending on credit"
+
+taxonomies:
+  - ROLE_CONFUSION
+  - MARKETING_UDAAP
+  - DISCLOSURE_MISSING
+  - SECURITY_COMPLIANCE_CLAIM
+  - BRAND_ASSET
+
+rules:
+  - id: ROLE_001_UPGRADE_IS_BANK
+    taxonomy: ROLE_CONFUSION
+    severity: HIGH
+    description: "Implies Upgrade is a bank."
+    patterns:
+      - "upgrade\\s+(is|as)\\s+(a\\s+)?bank\\b"
+      - "\\bupgrade\\s+bank\\b"
+      - "banking\\s+services\\s+provided\\s+by\\s+upgrade\\b"
+    recommendation: "Avoid calling Upgrade a bank unless legally true and approved; use approved role language."
+
+  - id: ROLE_002_FDIC_NEAR_UPGRADE
+    taxonomy: ROLE_CONFUSION
+    severity: HIGH
+    description: "Mentions FDIC near Upgrade/loan offer."
+    proximity:
+      anchor_patterns: ["\\bupgrade\\b"]
+      near_patterns:
+        - "\\bfdic\\b"
+        - "fdic\\s+insured"
+        - "member\\s+fdic"
+      window_chars: 250
+    recommendation: "Remove FDIC language unless specifically applicable and correctly attributed."
+
+  - id: ROLE_003_LENDER_IMPLIED
+    taxonomy: ROLE_CONFUSION
+    severity: HIGH
+    description: "Implies Upgrade is the lender/creditor/issuer."
+    patterns:
+      - "upgrade\\s+(is|serves\\s+as)\\s+(the\\s+)?(lender|creditor|issuer)\\b"
+      - "loans\\s+issued\\s+by\\s+upgrade\\b"
+      - "upgrade\\s+lends\\b"
+    recommendation: "Use approved lender/issuer attribution language and ensure roles are accurate."
+
+  - id: MKT_001_GUARANTEED_APPROVAL
+    taxonomy: MARKETING_UDAAP
+    severity: HIGH
+    description: "Guaranteed approval / everyone qualifies claim."
+    patterns:
+      - "guaranteed\\s+approval\\b"
+      - "everyone\\s+(is\\s+)?approved\\b"
+      - "all\\s+applicants\\s+approved\\b"
+      - "no\\s+one\\s+gets\\s+denied\\b"
+    recommendation: "Remove absolute approval claims; replace with approved eligibility + approval language."
+
+  - id: MKT_002_NO_CREDIT_CHECK
+    taxonomy: MARKETING_UDAAP
+    severity: HIGH
+    description: "Claims no credit check."
+    patterns:
+      - "no\\s+credit\\s+check\\b"
+      - "without\\s+(a\\s+)?credit\\s+check\\b"
+      - "zero\\s+credit\\s+check\\b"
+    recommendation: "Remove unless strictly true for the full funnel; otherwise clarify what checks occur."
+
+  - id: MKT_003_NO_FEES_CONDITIONAL
+    taxonomy: MARKETING_UDAAP
+    severity: MEDIUM
+    description: "No fees claim must be qualified."
+    patterns:
+      - "\\bno\\s+fees\\b"
+      - "zero\\s+fees\\b"
+      - "fee-?free\\b"
+    required_qualifiers_any:
+      - "terms_apply"
+    recommendation: "If used, specify which fees and include required qualifiers (e.g., 'terms apply')."
+
+  - id: MKT_004_INSTANT_APPROVAL_CONDITIONAL
+    taxonomy: MARKETING_UDAAP
+    severity: MEDIUM
+    description: "Instant approval claim should be qualified."
+    patterns:
+      - "instant\\s+approval\\b"
+      - "approved\\s+instantly\\b"
+      - "get\\s+approved\\s+instantly\\b"
+    required_qualifiers_any:
+      - "subject_to_credit"
+    recommendation: "Add 'subject to credit approval' (or approved equivalent) and avoid absolutes."
+
+  - id: MKT_005_BEST_LOWEST_RATE
+    taxonomy: MARKETING_UDAAP
+    severity: MEDIUM
+    description: "Best/lowest rate claim."
+    patterns:
+      - "best\\s+rates\\b"
+      - "lowest\\s+rates\\b"
+      - "lowest\\s+apr\\b"
+      - "best\\s+apr\\b"
+    recommendation: "Avoid superlatives unless substantiated and approved; prefer factual rate range language."
+
+  - id: MKT_006_BUILD_CREDIT
+    taxonomy: MARKETING_UDAAP
+    severity: MEDIUM
+    description: "Claims it will build/improve credit score."
+    patterns:
+      - "build\\s+your\\s+credit\\b"
+      - "improve\\s+your\\s+credit\\s+score\\b"
+      - "boost\\s+your\\s+credit\\s+score\\b"
+    recommendation: "Only use approved credit-reporting language with appropriate qualifiers."
+
+  - id: DISC_001_APR_MENTION_EXPECTED
+    taxonomy: DISCLOSURE_MISSING
+    severity: MEDIUM
+    description: "Rate/offer language present but missing variability/approval qualifiers nearby."
+    trigger_patterns:
+      - "as\\s+low\\s+as\\b"
+      - "\\bapr\\b"
+      - "interest\\s+rate\\b"
+      - "rates\\s+from\\b"
+    required_qualifiers_any:
+      - "apr_varies"
+      - "subject_to_credit"
+    recommendation: "Include approved APR/rate qualifiers (creditworthiness/variability) near rate claims."
+
+  - id: SEC_001_COMPLIANCE_BADGES
+    taxonomy: SECURITY_COMPLIANCE_CLAIM
+    severity: MEDIUM
+    description: "Mentions SOC 2 / ISO / PCI / CFPB compliance claims."
+    patterns:
+      - "soc\\s*2\\b"
+      - "iso\\s*27001\\b"
+      - "pci\\s+compliant\\b"
+      - "cfpb\\s+compliant\\b"
+      - "fully\\s+compliant\\b"
+      - "certified\\s+compliant\\b"
+    recommendation: "Only use compliance/certification claims that are approved and accurately scoped."
+
+keywords:
+  high_signal:
+    - "apr"
+    - "interest"
+    - "rate"
+    - "fee"
+    - "origination"
+    - "late fee"
+    - "prepayment"
+    - "credit"
+    - "approval"
+    - "fdic"
+    - "bank"
+    - "servicing"
+    - "complaint"

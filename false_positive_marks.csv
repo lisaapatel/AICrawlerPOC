@@ -1,0 +1,3 @@
+url,rule_id,snippet_contains,match_contains,url_contains,reason
+https://www.pods.com/financing,DISC_001_APR_MENTION_EXPECTED,Citi,,,,APR disclosure is for Citi not Upgrade
+https://www.pods.com/financing,DISC_001_APR_MENTION_EXPECTED,,,pods.com,Suppress DISC_001 on PODS (partner uses Citi copy)

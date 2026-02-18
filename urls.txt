@@ -1,0 +1,9 @@
+# Partner seed URLs (PODS, rFinance, 1&Fund)
+# PODS
+https://www.pods.com/financing
+# rFinance
+https://www.rfinance.com/
+https://www.rfinance.com/customers
+# 1&Fund
+https://www.1andfund.com/
+https://oneclickcontractor.com/financing-terms-conditions
